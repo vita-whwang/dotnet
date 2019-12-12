@@ -104,5 +104,31 @@ namespace EFCoreDemo.Controllers
 
             return department;
         }
+
+        // GET: api/Departments/CourseCounts
+        [HttpGet("CourseCounts")]
+        public async Task<ActionResult<IEnumerable<VwDepartmentCourseCount>>> GetDepartmentCourseCounts()
+        {
+            return await _context.VwDepartmentCourseCount
+                .FromSqlRaw("SELECT * FROM vwDepartmentCourseCount")
+                .ToListAsync();
+        }
+
+        // GET: api/Departments/CourseCounts/5
+        [HttpGet("CourseCounts/{id}")]
+        public async Task<ActionResult<VwDepartmentCourseCount>> GetDepartmentCourseCounts(int id)
+        {
+            var courseCounts = await _context.VwDepartmentCourseCount
+                .FromSqlRaw("SELECT *  FROM vwDepartmentCourseCount WHERE DepartmentID = {0}", id)
+                .ToListAsync();
+
+            var courseCount = courseCounts.FirstOrDefault();
+            if (courseCount == null)
+            {
+                return NotFound();
+            }
+
+            return courseCount;
+        }
     }
 }

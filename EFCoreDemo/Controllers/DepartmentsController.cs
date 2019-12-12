@@ -52,22 +52,18 @@ namespace EFCoreDemo.Controllers
                 return BadRequest();
             }
 
-            _context.Entry(department).State = EntityState.Modified;
+            var rowVersions = await _context.Department.FromSqlRaw(
+                "EXEC [dbo].[Department_Update] {0},{1},{2},{3},{4},{5}",
+                department.DepartmentId,
+                department.Name,
+                department.Budget,
+                department.StartDate,
+                department.InstructorId,
+                department.RowVersion).Select(d => d.RowVersion).ToListAsync();
 
-            try
+            if (rowVersions.FirstOrDefault() == null)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!DepartmentExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return NotFound();
             }
 
             return NoContent();
@@ -79,8 +75,14 @@ namespace EFCoreDemo.Controllers
         [HttpPost]
         public async Task<ActionResult<Department>> PostDepartment(Department department)
         {
-            _context.Department.Add(department);
-            await _context.SaveChangesAsync();
+            var departmentIds = await _context.Department.FromSqlRaw(
+                "EXEC [dbo].[Department_Insert] {0},{1},{2},{3}",
+                department.Name,
+                department.Budget,
+                department.StartDate,
+                department.InstructorId).Select(d => d.DepartmentId).ToListAsync();
+
+            department.DepartmentId = departmentIds.FirstOrDefault();
 
             return CreatedAtAction("GetDepartment", new { id = department.DepartmentId }, department);
         }
@@ -95,15 +97,12 @@ namespace EFCoreDemo.Controllers
                 return NotFound();
             }
 
-            _context.Department.Remove(department);
-            await _context.SaveChangesAsync();
+            await _context.Database.ExecuteSqlRawAsync(
+               "EXEC [dbo].[Department_Delete] {0}, {1}",
+               department.DepartmentId,
+               department.RowVersion);
 
             return department;
-        }
-
-        private bool DepartmentExists(int id)
-        {
-            return _context.Department.Any(e => e.DepartmentId == id);
         }
     }
 }

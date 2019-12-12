@@ -105,5 +105,37 @@ namespace EFCoreDemo.Controllers
         {
             return _context.Course.Any(e => e.CourseId == id);
         }
+
+        // Get: api/Courses/Students/
+        [HttpGet("Students")]
+        public async Task<ActionResult<IEnumerable<VwCourseStudents>>> GetCourseStudents()
+        {
+            return await _context.VwCourseStudents.ToListAsync();
+        }
+
+        // Get: api/Courses/Students/5
+        [HttpGet("Students/{id}")]
+        public async Task<ActionResult<IEnumerable<VwCourseStudents>>> GetCourseStudents(int id)
+        {
+            return await _context.VwCourseStudents.Where(c => c.CourseId == id).ToListAsync();
+        }
+
+        // Get: api/Courses/StudentCounts/
+        [HttpGet("StudentCounts")]
+        public async Task<ActionResult<IEnumerable<VwCourseStudentCount>>> GetCourseStudentCount()
+        {
+            return await _context.VwCourseStudentCount.ToListAsync();
+        }
+
+        // Get: api/Courses/StudentCounts/5
+        [HttpGet("StudentCounts/{id}")]
+        public async Task<ActionResult<VwCourseStudentCount>> GetCourseStudentCount(int id)
+        {
+            var studentCount = await _context.VwCourseStudentCount.Where(c => c.CourseId == id).FirstOrDefaultAsync();
+            if (studentCount == null) { 
+                return NotFound();
+            }
+            return studentCount;
+        }
     }
 }

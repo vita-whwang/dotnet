@@ -24,14 +24,15 @@ namespace EFCoreDemo.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Department>>> GetDepartment()
         {
-            return await _context.Department.ToListAsync();
+            return await _context.Department.Where(d => d.IsDeleted == false).ToListAsync();
         }
 
         // GET: api/Departments/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Department>> GetDepartment(int id)
         {
-            var department = await _context.Department.FindAsync(id);
+            var department = await _context.Department
+                .FirstOrDefaultAsync(d => d.DepartmentId == id && d.IsDeleted == false);
 
             if (department == null)
             {
@@ -87,8 +88,8 @@ namespace EFCoreDemo.Controllers
             return CreatedAtAction("GetDepartment", new { id = department.DepartmentId }, department);
         }
 
-        // DELETE: api/Departments/5
-        [HttpDelete("{id}")]
+        //DELETE: api/Departments/Delete/5
+        [HttpDelete("Delete/{id}")]
         public async Task<ActionResult<Department>> DeleteDepartment(int id)
         {
             var department = await _context.Department.FindAsync(id);
@@ -101,6 +102,24 @@ namespace EFCoreDemo.Controllers
                "EXEC [dbo].[Department_Delete] {0}, {1}",
                department.DepartmentId,
                department.RowVersion);
+
+            return department;
+        }
+
+        // DELETE: api/Departments/5
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<Department>> HideDepartment(int id)
+        {
+            var department = await _context.Department.FirstOrDefaultAsync(d => d.DepartmentId == id && d.IsDeleted == false);
+
+            if (department == null)
+            {
+                return NotFound();
+            }
+
+            department.IsDeleted = true;
+            _context.Department.Update(department);
+            await _context.SaveChangesAsync();
 
             return department;
         }

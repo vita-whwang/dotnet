@@ -24,14 +24,14 @@ namespace EFCoreDemo.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Course>>> GetCourse()
         {
-            return await _context.Course.ToListAsync();
+            return await _context.Course.Where(c => c.IsDeleted == false).ToListAsync();
         }
 
         // GET: api/Courses/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Course>> GetCourse(int id)
         {
-            var course = await _context.Course.FindAsync(id);
+            var course = await _context.Course.FirstOrDefaultAsync(c => c.CourseId == id && c.IsDeleted == false);
 
             if (course == null)
             {
@@ -95,7 +95,8 @@ namespace EFCoreDemo.Controllers
                 return NotFound();
             }
 
-            _context.Course.Remove(course);
+            course.IsDeleted = true;
+            _context.Course.Update(course);
             await _context.SaveChangesAsync();
 
             return course;
